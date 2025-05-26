@@ -1,15 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "Tab Guard - Malicious Tab Monitor",
-  "version": "1.0.0",
-  "description": "Monitor browser tabs for malicious activities including clipboard access, auto form submissions, and crypto mining",
+  "name": "Tab Guard - Advanced Security Monitor",
+  "version": "3.0.0",
+  "description": "Professional browser security extension with real-time threat detection, advanced monitoring, and comprehensive protection against malicious activities",
   "permissions": [
     "tabs",
     "scripting",
     "activeTab",
     "storage",
     "clipboardRead",
-    "clipboardWrite"
+    "clipboardWrite",
+    "notifications",
+    "declarativeNetRequest",
+    "webRequest",
+    "alarms",
+    "contextMenus",
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -26,7 +32,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Tab Guard - Malicious Tab Monitor",
+    "default_title": "Tab Guard - Advanced Security Monitor",
     "default_icon": {
       "16": "icons/icon16.svg",
       "32": "icons/icon32.svg",
@@ -39,5 +45,12 @@
     "32": "icons/icon32.svg",
     "48": "icons/icon48.svg",
     "128": "icons/icon128.svg"
+  },
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "malicious_urls",
+      "enabled": true,
+      "path": "rules.json"
+    }]
   }
 }
