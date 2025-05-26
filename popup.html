@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Guard - Malicious Tab Monitor</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1>Tab Guard</h1>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Monitoring</span>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="current">Current Tabs</button>
+            <button class="nav-tab" data-tab="history">Activity Log</button>
+            <button class="nav-tab" data-tab="settings">Settings</button>
+        </nav>
+
+        <main class="content">
+            <!-- Current Tabs View -->
+            <section class="tab-content active" id="currentTab">
+                <div class="tabs-list" id="tabsList">
+                    <div class="loading">Loading monitored tabs...</div>
+                </div>
+            </section>
+
+            <!-- Activity History View -->
+            <section class="tab-content" id="historyTab">
+                <div class="activity-header">
+                    <h3>Recent Suspicious Activities</h3>
+                    <button class="btn-clear" id="clearHistory">Clear History</button>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="loading">Loading activity history...</div>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section class="tab-content" id="settingsTab">
+                <div class="settings-section">
+                    <h3>Monitoring Settings</h3>
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="clipboardMonitoring" checked>
+                            <span class="checkmark"></span>
+                            Monitor Clipboard Access
+                        </label>
+                        <p class="setting-description">Detect when websites try to read or write to your clipboard</p>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="formMonitoring" checked>
+                            <span class="checkmark"></span>
+                            Monitor Auto Form Submissions
+                        </label>
+                        <p class="setting-description">Detect forms being submitted automatically without user interaction</p>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label class="setting-label">
+                            <input type="checkbox" id="cryptoMiningMonitoring" checked>
+                            <span class="checkmark"></span>
+                            Monitor Crypto Mining
+                        </label>
+                        <p class="setting-description">Detect potential cryptocurrency mining scripts</p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Whitelisted Domains</h3>
+                    <div class="whitelist-input">
+                        <input type="text" id="domainInput" placeholder="Enter domain (e.g., example.com)">
+                        <button class="btn-add" id="addDomain">Add</button>
+                    </div>
+                    <div class="whitelist-list" id="whitelistList">
+                        <!-- Whitelisted domains will be populated here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
