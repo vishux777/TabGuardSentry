@@ -93,7 +93,7 @@ Once installed, Tab Guard runs in the background, continuously monitoring your b
 The project is organized as follows:
 tab-guard/
 ├── background.js     
-# Service worker: Handles background tasks, threat detection logic, storage, and communication with content scripts.
+## Service worker: Handles background tasks, threat detection logic, storage, and communication with content scripts.
 ├── content.js           
  # Content script: Injects into web pages to monitor DOM mutations, form submissions, network requests, and other client-side behaviors.
 ├── manifest.json         
