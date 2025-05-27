@@ -93,21 +93,21 @@ Once installed, Tab Guard runs in the background, continuously monitoring your b
 The project is organized as follows:
 tab-guard/
 ├── background.js     
-## Service worker: Handles background tasks, threat detection logic, storage, and communication with content scripts.
+### Service worker: Handles background tasks, threat detection logic, storage, and communication with content scripts.
 ├── content.js           
- # Content script: Injects into web pages to monitor DOM mutations, form submissions, network requests, and other client-side behaviors.
+ ### Content script: Injects into web pages to monitor DOM mutations, form submissions, network requests, and other client-side behaviors.
 ├── manifest.json         
-# Extension manifest: Defines permissions, background scripts, content scripts, and other extension properties.
+### Extension manifest: Defines permissions, background scripts, content scripts, and other extension properties.
 ├── popup.html            
-# The HTML file for the extension's popup UI.
+### The HTML file for the extension's popup UI.
 ├── popup.css             
-# Stylesheet for the popup UI.
+### Stylesheet for the popup UI.
 ├── popup.js              
-# JavaScript for the popup UI: Handles UI interactions, data display, and communication with the background script.
+### JavaScript for the popup UI: Handles UI interactions, data display, and communication with the background script.
 ├── rules.json            
-# Declarative Net Request rules: Contains a list of rules for blocking malicious URLs and resources.
+### Declarative Net Request rules: Contains a list of rules for blocking malicious URLs and resources.
 └── icons/                
-# Directory for extension icons (16x16, 32x32, 48x48, 128x128 SVG files).
+### Directory for extension icons (16x16, 32x32, 48x48, 128x128 SVG files).
 ├── icon16.svg
 ├── icon32.svg
 ├── icon48.svg
