@@ -1,7 +1,7 @@
-// Advanced Background service worker for Tab Guard extension
-console.log('Tab Guard Advanced background script loaded');
+// Tab Guard Advanced Background Service Worker
+console.log('Tab Guard v3.0 - Background service loaded');
 
-// Store for tab monitoring data
+// Global state management
 let tabMonitoringData = {};
 let cpuMonitoringIntervals = {};
 let networkMonitoringData = {};
@@ -13,23 +13,23 @@ let realTimeStats = {
   startTime: Date.now()
 };
 
-// Advanced threat patterns
+// Threat detection patterns
 const THREAT_PATTERNS = {
   cryptoMining: [
-    /coinhive/i, /cryptonight/i, /monero/i, /webassembly.*mining/i, /wasm.*hash/i,
-    /stratum\+tcp/i, /mining.*pool/i, /hashrate/i, /cpu.*miner/i, /javascript.*miner/i
+    /coinhive/i, /cryptonight/i, /monero/i, /webassembly.*mining/i,
+    /stratum\+tcp/i, /mining.*pool/i, /hashrate/i, /cpu.*miner/i
   ],
   phishing: [
-    /login.*verification/i, /account.*suspended/i, /verify.*account/i, /urgent.*action/i,
-    /click.*here.*immediately/i, /suspended.*account/i, /security.*alert/i
+    /login.*verification/i, /account.*suspended/i, /verify.*account/i,
+    /urgent.*action/i, /click.*here.*immediately/i, /security.*alert/i
   ],
   maliciousScripts: [
     /eval\(.*atob/i, /document\.write.*unescape/i, /fromCharCode.*join/i,
-    /\.replace.*String\.fromCharCode/i, /obfuscated/i
+    /obfuscated/i, /base64.*decode/i
   ]
 };
 
-// Malicious domains and IPs (sample threat intelligence)
+// Known malicious domains
 const KNOWN_THREATS = [
   'malware-domain.com', 'phishing-site.net', 'crypto-miner.org',
   'fake-bank.com', 'suspicious-download.xyz', 'trojan-host.info'
@@ -37,60 +37,49 @@ const KNOWN_THREATS = [
 
 // Initialize extension
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Tab Guard Advanced extension installed');
+  console.log('Tab Guard extension installed');
   initializeStorage();
   initializeContextMenus();
   initializeThreatDatabase();
-  setupPeriodicCleanup();
+  setupPeriodicTasks();
 });
 
-// Initialize storage structure
+// Initialize storage with default settings
 async function initializeStorage() {
   try {
-    const result = await chrome.storage.local.get([
-      'tabGuardLogs', 'tabGuardSettings', 'threatReports', 'quarantinedFiles', 'realTimeStats'
-    ]);
+    const defaultSettings = {
+      cryptoMining: true,
+      clipboardProtection: true,
+      formMonitoring: true,
+      phishingProtection: true,
+      networkMonitoring: true,
+      notifications: true,
+      securityLevel: 'medium',
+      trustedDomains: [],
+      blockedDomains: []
+    };
+
+    const result = await chrome.storage.local.get(['tabGuardSettings', 'tabGuardLogs', 'threatReports']);
+    
+    if (!result.tabGuardSettings) {
+      await chrome.storage.local.set({ tabGuardSettings: defaultSettings });
+    }
     
     if (!result.tabGuardLogs) {
       await chrome.storage.local.set({ tabGuardLogs: [] });
     }
     
-    if (!result.tabGuardSettings) {
-      await chrome.storage.local.set({
-        tabGuardSettings: {
-          clipboardMonitoring: true,
-          formMonitoring: true,
-          cryptoMiningMonitoring: true,
-          networkMonitoring: true,
-          phishingProtection: true,
-          realTimeScanning: true,
-          autoQuarantine: true,
-          notificationsEnabled: true,
-          threatLevel: 'medium', // low, medium, high
-          whitelistedDomains: [],
-          blockedDomains: [],
-          customRules: []
-        }
-      });
-    }
-
     if (!result.threatReports) {
       await chrome.storage.local.set({ threatReports: [] });
     }
 
-    if (!result.quarantinedFiles) {
-      await chrome.storage.local.set({ quarantinedFiles: [] });
-    }
-
-    if (!result.realTimeStats) {
-      await chrome.storage.local.set({ realTimeStats: realTimeStats });
-    }
+    await chrome.storage.local.set({ realTimeStats: realTimeStats });
   } catch (error) {
     console.error('Error initializing storage:', error);
   }
 }
 
-// Initialize context menus
+// Setup context menus
 function initializeContextMenus() {
   chrome.contextMenus.create({
     id: 'scan-page',
@@ -103,12 +92,6 @@ function initializeContextMenus() {
     title: 'Block this domain',
     contexts: ['page']
   });
-
-  chrome.contextMenus.create({
-    id: 'export-logs',
-    title: 'Export security logs',
-    contexts: ['action']
-  });
 }
 
 // Handle context menu clicks
@@ -120,9 +103,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     case 'block-domain':
       await blockDomain(extractDomain(tab.url));
       break;
-    case 'export-logs':
-      await exportSecurityLogs();
-      break;
   }
 });
 
@@ -131,8 +111,8 @@ function initializeThreatDatabase() {
   KNOWN_THREATS.forEach(threat => threatDatabase.add(threat));
 }
 
-// Setup periodic cleanup
-function setupPeriodicCleanup() {
+// Setup periodic tasks
+function setupPeriodicTasks() {
   chrome.alarms.create('cleanup', { periodInMinutes: 60 });
   chrome.alarms.create('stats-update', { periodInMinutes: 5 });
 }
@@ -141,7 +121,7 @@ function setupPeriodicCleanup() {
 chrome.alarms.onAlarm.addListener((alarm) => {
   switch (alarm.name) {
     case 'cleanup':
-      performPeriodicCleanup();
+      performCleanup();
       break;
     case 'stats-update':
       updateRealTimeStats();
@@ -149,7 +129,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Listen for tab updates
+// Monitor tab updates
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     initializeTabMonitoring(tabId, tab.url);
@@ -157,12 +137,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-// Listen for tab removal
+// Clean up when tabs are closed
 chrome.tabs.onRemoved.addListener((tabId) => {
   cleanupTabMonitoring(tabId);
 });
 
-// Initialize monitoring for a specific tab
+// Initialize monitoring for a tab
 function initializeTabMonitoring(tabId, url) {
   const domain = extractDomain(url);
   
@@ -171,36 +151,17 @@ function initializeTabMonitoring(tabId, url) {
     domain: domain,
     startTime: Date.now(),
     suspiciousActivities: [],
-    networkRequests: [],
     riskScore: 0,
-    threatLevel: 'low',
-    cpuUsage: {
-      requestAnimationFrameCalls: 0,
-      setIntervalCalls: 0,
-      webWorkerCreations: 0,
-      lastCheck: Date.now()
-    },
-    permissions: {
-      clipboard: false,
-      camera: false,
-      microphone: false,
-      location: false,
-      notifications: false
-    },
-    behaviorAnalysis: {
-      redirectAttempts: 0,
-      popupAttempts: 0,
-      downloadAttempts: 0,
-      formSubmissions: 0
-    }
+    threatLevel: 'safe',
+    cpuUsage: { calls: 0, lastCheck: Date.now() },
+    networkRequests: []
   };
   
   realTimeStats.tabsMonitored++;
   startCpuMonitoring(tabId);
-  startNetworkMonitoring(tabId);
 }
 
-// Cleanup monitoring data when tab is closed
+// Cleanup tab monitoring
 function cleanupTabMonitoring(tabId) {
   delete tabMonitoringData[tabId];
   delete networkMonitoringData[tabId];
@@ -211,7 +172,7 @@ function cleanupTabMonitoring(tabId) {
   }
 }
 
-// Start CPU usage monitoring
+// Start CPU monitoring for crypto mining detection
 function startCpuMonitoring(tabId) {
   if (cpuMonitoringIntervals[tabId]) {
     clearInterval(cpuMonitoringIntervals[tabId]);
@@ -229,18 +190,7 @@ function startCpuMonitoring(tabId) {
   }, 3000);
 }
 
-// Start network monitoring
-function startNetworkMonitoring(tabId) {
-  if (!networkMonitoringData[tabId]) {
-    networkMonitoringData[tabId] = {
-      requests: [],
-      suspiciousRequests: [],
-      totalRequests: 0
-    };
-  }
-}
-
-// Enhanced CPU monitoring function
+// CPU monitoring function injected into pages
 function checkCpuIntensiveOperations() {
   if (window.tabGuardCpuMonitor) {
     const monitor = window.tabGuardCpuMonitor;
@@ -251,28 +201,9 @@ function checkCpuIntensiveOperations() {
     const intervalRate = (monitor.intervalCalls / timeDiff) * 1000;
     const workerRate = (monitor.workerCreations / timeDiff) * 1000;
     
-    // Enhanced thresholds with dynamic adjustment
-    const RAF_THRESHOLD = 40;
-    const INTERVAL_THRESHOLD = 15;
-    const WORKER_THRESHOLD = 2;
-    
-    let threatLevel = 'low';
-    let riskScore = 0;
-    
-    if (rafRate > RAF_THRESHOLD) {
-      riskScore += 30;
-      threatLevel = 'medium';
-    }
-    if (intervalRate > INTERVAL_THRESHOLD) {
-      riskScore += 25;
-      threatLevel = 'medium';
-    }
-    if (workerRate > WORKER_THRESHOLD) {
-      riskScore += 45;
-      threatLevel = 'high';
-    }
-    
-    if (riskScore > 50) {
+    if (rafRate > 30 || intervalRate > 10 || workerRate > 1) {
+      const riskScore = Math.min(rafRate + intervalRate * 2 + workerRate * 30, 100);
+      
       chrome.runtime.sendMessage({
         type: 'CRYPTO_MINING_DETECTED',
         data: {
@@ -281,7 +212,6 @@ function checkCpuIntensiveOperations() {
           intervalRate: intervalRate,
           workerRate: workerRate,
           riskScore: riskScore,
-          threatLevel: threatLevel,
           timestamp: now
         }
       });
@@ -331,7 +261,7 @@ async function checkUrlThreat(url, tabId) {
   }
 }
 
-// Handle threat detection
+// Handle detected threats
 async function handleThreatDetected(tabId, threat) {
   realTimeStats.threatsBlocked++;
   
@@ -349,25 +279,28 @@ async function handleThreatDetected(tabId, threat) {
     blocked: true
   };
   
-  const result = await chrome.storage.local.get(['threatReports']);
-  const reports = result.threatReports || [];
-  reports.push(threatReport);
-  
-  if (reports.length > 500) {
-    reports.splice(0, reports.length - 500);
-  }
-  
-  await chrome.storage.local.set({ threatReports: reports });
-  
-  // Show notification for high-risk threats
-  if (threat.data.riskScore > 70) {
-    showThreatNotification(threat);
-  }
-  
-  // Auto-block if enabled
-  const settings = await chrome.storage.local.get(['tabGuardSettings']);
-  if (settings.tabGuardSettings?.autoQuarantine && threat.data.riskScore > 80) {
-    chrome.tabs.update(tabId, { url: chrome.runtime.getURL('blocked.html') });
+  try {
+    const result = await chrome.storage.local.get(['threatReports']);
+    const reports = result.threatReports || [];
+    reports.push(threatReport);
+    
+    // Keep only last 100 reports
+    if (reports.length > 100) {
+      reports.splice(0, reports.length - 100);
+    }
+    
+    await chrome.storage.local.set({ threatReports: reports });
+    
+    // Show notification for high-risk threats
+    if (threat.data.riskScore > 70) {
+      showThreatNotification(threat);
+    }
+    
+    // Update badge
+    updateBadge(tabId);
+    
+  } catch (error) {
+    console.error('Error storing threat report:', error);
   }
 }
 
@@ -376,7 +309,7 @@ function calculateThreatLevel(riskScore) {
   if (riskScore >= 80) return 'critical';
   if (riskScore >= 60) return 'high';
   if (riskScore >= 30) return 'medium';
-  return 'low';
+  return 'safe';
 }
 
 // Show threat notification
@@ -390,7 +323,32 @@ function showThreatNotification(threat) {
   });
 }
 
-// Listen for messages from content scripts
+// Update extension badge
+function updateBadge(tabId) {
+  if (tabMonitoringData[tabId]) {
+    const threatLevel = tabMonitoringData[tabId].threatLevel;
+    const activityCount = tabMonitoringData[tabId].suspiciousActivities.length;
+    
+    let color = '#10b981'; // green for safe
+    let text = '';
+    
+    if (threatLevel === 'critical') {
+      color = '#dc2626'; // red
+      text = '!';
+    } else if (threatLevel === 'high') {
+      color = '#f59e0b'; // orange
+      text = '!';
+    } else if (threatLevel === 'medium') {
+      color = '#3b82f6'; // blue
+      text = activityCount > 0 ? activityCount.toString() : '';
+    }
+    
+    chrome.action.setBadgeText({ text: text, tabId: tabId });
+    chrome.action.setBadgeBackgroundColor({ color: color, tabId: tabId });
+  }
+}
+
+// Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (sender.tab) {
     await handleSuspiciousActivity(sender.tab.id, message);
@@ -424,20 +382,20 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         });
         return true;
         
-      case 'EXPORT_LOGS':
-        await exportSecurityLogs();
+      case 'DEEP_SCAN':
+        await performDeepScan(message.tabId);
         sendResponse({ success: true });
         break;
         
-      case 'DEEP_SCAN':
-        await performDeepScan(message.tabId);
+      case 'EXPORT_DATA':
+        await exportSecurityData();
         sendResponse({ success: true });
         break;
     }
   }
 });
 
-// Enhanced suspicious activity handler
+// Handle suspicious activities from content scripts
 async function handleSuspiciousActivity(tabId, message) {
   const activity = {
     type: message.type,
@@ -457,14 +415,15 @@ async function handleSuspiciousActivity(tabId, message) {
     tabMonitoringData[tabId].threatLevel = calculateThreatLevel(tabMonitoringData[tabId].riskScore);
   }
   
-  // Store in persistent storage
+  // Store in persistent logs
   try {
     const result = await chrome.storage.local.get(['tabGuardLogs']);
     const logs = result.tabGuardLogs || [];
     logs.push(activity);
     
-    if (logs.length > 1000) {
-      logs.splice(0, logs.length - 1000);
+    // Keep only last 500 logs
+    if (logs.length > 500) {
+      logs.splice(0, logs.length - 500);
     }
     
     await chrome.storage.local.set({ tabGuardLogs: logs });
@@ -472,14 +431,14 @@ async function handleSuspiciousActivity(tabId, message) {
     updateBadge(tabId);
     
     if (shouldShowNotification(message.type, activity.severity)) {
-      showNotification(activity);
+      showActivityNotification(activity);
     }
   } catch (error) {
     console.error('Error storing activity log:', error);
   }
 }
 
-// Calculate severity based on activity type
+// Calculate activity severity
 function calculateSeverity(type) {
   const severityMap = {
     'CRYPTO_MINING_DETECTED': 'high',
@@ -507,51 +466,25 @@ function calculateRiskScore(type, data) {
   
   let score = baseScores[type] || 10;
   
-  // Adjust score based on data
   if (data.riskScore) {
     score = Math.max(score, data.riskScore);
   }
   
-  return score;
+  return Math.min(score, 100);
 }
 
-// Enhanced badge update
-function updateBadge(tabId) {
-  if (tabMonitoringData[tabId]) {
-    const threatLevel = tabMonitoringData[tabId].threatLevel;
-    const activityCount = tabMonitoringData[tabId].suspiciousActivities.length;
-    
-    let color = '#28a745'; // green for safe
-    let text = '';
-    
-    if (threatLevel === 'critical') {
-      color = '#dc3545'; // red
-      text = '!';
-    } else if (threatLevel === 'high') {
-      color = '#fd7e14'; // orange
-      text = '!';
-    } else if (threatLevel === 'medium') {
-      color = '#ffc107'; // yellow
-      text = activityCount > 0 ? activityCount.toString() : '';
-    }
-    
-    chrome.action.setBadgeText({ text: text, tabId: tabId });
-    chrome.action.setBadgeBackgroundColor({ color: color, tabId: tabId });
-  }
-}
-
-// Enhanced notification check
+// Check if notification should be shown
 function shouldShowNotification(activityType, severity) {
   const highRiskActivities = ['CRYPTO_MINING_DETECTED', 'AUTO_FORM_SUBMISSION', 'MALICIOUS_SCRIPT'];
   return highRiskActivities.includes(activityType) || severity === 'critical' || severity === 'high';
 }
 
-// Enhanced notification
-function showNotification(activity) {
+// Show activity notification
+function showActivityNotification(activity) {
   const messages = {
-    'CRYPTO_MINING_DETECTED': 'Cryptocurrency mining detected',
-    'CLIPBOARD_ACCESS': 'Unauthorized clipboard access',
-    'AUTO_FORM_SUBMISSION': 'Automatic form submission detected',
+    'CRYPTO_MINING_DETECTED': 'Cryptocurrency mining blocked',
+    'CLIPBOARD_ACCESS': 'Clipboard access detected',
+    'AUTO_FORM_SUBMISSION': 'Automatic form submission blocked',
     'SUSPICIOUS_DOWNLOAD': 'Suspicious download blocked',
     'MALICIOUS_SCRIPT': 'Malicious script detected',
     'PHISHING_ATTEMPT': 'Phishing attempt blocked'
@@ -572,7 +505,6 @@ async function performDeepScan(tabId) {
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
       func: () => {
-        // Comprehensive page scan
         const scanResults = {
           scripts: document.scripts.length,
           forms: document.forms.length,
@@ -581,7 +513,6 @@ async function performDeepScan(tabId) {
           suspiciousElements: 0
         };
         
-        // Check for suspicious patterns
         const pageContent = document.documentElement.innerHTML;
         const suspiciousPatterns = [
           /eval\(/gi, /document\.write/gi, /innerHTML.*script/gi,
@@ -608,22 +539,26 @@ async function performDeepScan(tabId) {
 
 // Block domain
 async function blockDomain(domain) {
-  const result = await chrome.storage.local.get(['tabGuardSettings']);
-  const settings = result.tabGuardSettings || {};
-  
-  if (!settings.blockedDomains) {
-    settings.blockedDomains = [];
-  }
-  
-  if (!settings.blockedDomains.includes(domain)) {
-    settings.blockedDomains.push(domain);
-    await chrome.storage.local.set({ tabGuardSettings: settings });
-    threatDatabase.add(domain);
+  try {
+    const result = await chrome.storage.local.get(['tabGuardSettings']);
+    const settings = result.tabGuardSettings || {};
+    
+    if (!settings.blockedDomains) {
+      settings.blockedDomains = [];
+    }
+    
+    if (!settings.blockedDomains.includes(domain)) {
+      settings.blockedDomains.push(domain);
+      await chrome.storage.local.set({ tabGuardSettings: settings });
+      threatDatabase.add(domain);
+    }
+  } catch (error) {
+    console.error('Error blocking domain:', error);
   }
 }
 
-// Export security logs
-async function exportSecurityLogs() {
+// Export security data
+async function exportSecurityData() {
   try {
     const [logs, reports, stats] = await Promise.all([
       chrome.storage.local.get(['tabGuardLogs']),
@@ -651,17 +586,17 @@ async function exportSecurityLogs() {
 }
 
 // Periodic cleanup
-async function performPeriodicCleanup() {
+async function performCleanup() {
   try {
     const result = await chrome.storage.local.get(['tabGuardLogs', 'threatReports']);
     const logs = result.tabGuardLogs || [];
     const reports = result.threatReports || [];
     
-    // Keep only last 30 days of data
-    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    // Keep only last 7 days of data
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     
-    const filteredLogs = logs.filter(log => log.timestamp > thirtyDaysAgo);
-    const filteredReports = reports.filter(report => report.timestamp > thirtyDaysAgo);
+    const filteredLogs = logs.filter(log => log.timestamp > sevenDaysAgo);
+    const filteredReports = reports.filter(report => report.timestamp > sevenDaysAgo);
     
     await chrome.storage.local.set({
       tabGuardLogs: filteredLogs,

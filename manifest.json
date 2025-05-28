@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tab Guard - Advanced Security Monitor",
   "version": "3.0.0",
-  "description": "Professional browser security extension with real-time threat detection, advanced monitoring, and comprehensive protection against malicious activities",
+  "description": "Comprehensive browser security extension with real-time threat detection, crypto mining protection, and advanced monitoring",
   "permissions": [
     "tabs",
     "scripting",
@@ -32,7 +32,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Tab Guard - Advanced Security Monitor",
+    "default_title": "Tab Guard - Security Monitor",
     "default_icon": {
       "16": "icons/icon16.svg",
       "32": "icons/icon32.svg",

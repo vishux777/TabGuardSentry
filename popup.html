@@ -1,492 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tab Guard - Security Monitor</title>
-    <link rel="stylesheet" href="popup.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tab Guard Security Monitor</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Modern Header -->
-        <header class="modern-header">
-            <div class="header-content">
-                <div class="brand-section">
-                    <div class="brand-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z" 
-                                  fill="url(#headerGradient)" stroke="currentColor" stroke-width="2"/>
-                            <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2.5" 
-                                  stroke-linecap="round" stroke-linejoin="round"/>
-                            <defs>
-                                <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#4F46E5"/>
-                                    <stop offset="100%" style="stop-color:#7C3AED"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <div class="brand-info">
-                        <h1 class="brand-title">Tab Guard</h1>
-                        <span class="brand-subtitle">Security Monitor</span>
-                    </div>
-                </div>
-                
-                <div class="header-status">
-                    <div class="protection-badge active" id="protectionBadge">
-                        <div class="badge-indicator"></div>
-                        <span class="badge-text">Protected</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Enhanced Stats Dashboard -->
-        <section class="stats-dashboard">
-            <div class="stats-grid">
-                <div class="stat-card threats">
-                    <div class="stat-icon">🛡️</div>
-                    <div class="stat-content">
-                        <div class="stat-number" id="threatsBlocked">0</div>
-                        <div class="stat-label">Threats Blocked</div>
-                    </div>
-                    <div class="stat-trend positive">↗️</div>
-                </div>
-                
-                <div class="stat-card tabs">
-                    <div class="stat-icon">👁️</div>
-                    <div class="stat-content">
-                        <div class="stat-number" id="tabsMonitored">0</div>
-                        <div class="stat-label">Tabs Monitored</div>
-                    </div>
-                    <div class="stat-trend neutral">➡️</div>
-                </div>
-                
-                <div class="stat-card activities">
-                    <div class="stat-icon">⚡</div>
-                    <div class="stat-content">
-                        <div class="stat-number" id="activitiesDetected">0</div>
-                        <div class="stat-label">Activities</div>
-                    </div>
-                    <div class="stat-trend negative">⚠️</div>
-                </div>
-                
-                <div class="stat-card security">
-                    <div class="stat-icon">🔒</div>
-                    <div class="stat-content">
-                        <div class="security-level" id="securityLevel">HIGH</div>
-                        <div class="stat-label">Security Level</div>
-                    </div>
-                    <div class="security-indicator" id="securityIndicator"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Modern Navigation -->
-        <nav class="modern-nav">
-            <div class="nav-container">
-                <button class="nav-button active" data-view="dashboard">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-label">Dashboard</span>
-                </button>
-                <button class="nav-button" data-view="protection">
-                    <span class="nav-icon">🛡️</span>
-                    <span class="nav-label">Protection</span>
-                </button>
-                <button class="nav-button" data-view="threats">
-                    <span class="nav-icon">⚠️</span>
-                    <span class="nav-label">Threats</span>
-                </button>
-                <button class="nav-button" data-view="settings">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">Settings</span>
-                </button>
-            </div>
-        </nav>
-
-        <!-- Content Views -->
-        <main class="content-area">
-            <!-- Dashboard View -->
-            <div class="view-content active" id="dashboardView">
-                <div class="view-header">
-                    <h2 class="view-title">Security Dashboard</h2>
-                    <button class="refresh-btn" id="refreshDashboard">
-                        <span class="btn-icon">🔄</span>
-                        <span>Refresh</span>
-                    </button>
-                </div>
-                
-                <div class="dashboard-content">
-                    <!-- Threat Level Card -->
-                    <div class="feature-card threat-level-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Current Threat Level</h3>
-                            <div class="threat-level-display" id="threatLevelDisplay">
-                                <div class="threat-ring" id="threatRing">
-                                    <div class="threat-level-text" id="threatLevelText">LOW</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="threat-details" id="threatDetails">
-                            <div class="threat-metric">
-                                <span class="metric-label">Risk Score:</span>
-                                <span class="metric-value" id="riskScore">15</span>
-                            </div>
-                            <div class="threat-metric">
-                                <span class="metric-label">Active Threats:</span>
-                                <span class="metric-value" id="activeThreats">0</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity Card -->
-                    <div class="feature-card activity-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Recent Activity</h3>
-                            <button class="card-action" id="viewAllActivity">View All</button>
-                        </div>
-                        <div class="activity-feed" id="recentActivity">
-                            <div class="activity-item safe">
-                                <div class="activity-icon">✅</div>
-                                <div class="activity-content">
-                                    <div class="activity-title">System Initialized</div>
-                                    <div class="activity-time">Just now</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Protection Status Card -->
-                    <div class="feature-card protection-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Protection Modules</h3>
-                            <div class="protection-toggle">
-                                <input type="checkbox" id="masterProtection" checked>
-                                <label for="masterProtection" class="toggle-switch"></label>
-                            </div>
-                        </div>
-                        <div class="protection-modules" id="protectionModules">
-                            <div class="module-item active">
-                                <div class="module-icon">🔍</div>
-                                <div class="module-info">
-                                    <div class="module-name">Crypto Mining Detection</div>
-                                    <div class="module-status">Active</div>
-                                </div>
-                                <div class="module-indicator active"></div>
-                            </div>
-                            <div class="module-item active">
-                                <div class="module-icon">📋</div>
-                                <div class="module-info">
-                                    <div class="module-name">Clipboard Protection</div>
-                                    <div class="module-status">Active</div>
-                                </div>
-                                <div class="module-indicator active"></div>
-                            </div>
-                            <div class="module-item active">
-                                <div class="module-icon">🎣</div>
-                                <div class="module-info">
-                                    <div class="module-name">Phishing Shield</div>
-                                    <div class="module-status">Active</div>
-                                </div>
-                                <div class="module-indicator active"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Protection View -->
-            <div class="view-content" id="protectionView">
-                <div class="view-header">
-                    <h2 class="view-title">Active Protection</h2>
-                    <button class="scan-btn" id="quickScanBtn">
-                        <span class="btn-icon">🔍</span>
-                        <span>Quick Scan</span>
-                    </button>
-                </div>
-                
-                <div class="protection-content">
-                    <!-- Current Tabs -->
-                    <div class="feature-card tabs-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Monitored Tabs</h3>
-                            <div class="card-actions">
-                                <button class="action-btn" id="scanAllBtn">Scan All</button>
-                                <button class="action-btn secondary" id="refreshTabs">Refresh</button>
-                            </div>
-                        </div>
-                        <div class="tabs-container" id="tabsContainer">
-                            <div class="loading-state">
-                                <div class="loading-spinner"></div>
-                                <span>Loading tabs...</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Real-time Monitoring -->
-                    <div class="feature-card monitoring-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Real-time Monitoring</h3>
-                            <div class="monitoring-status active">
-                                <div class="status-dot"></div>
-                                <span>Live</span>
-                            </div>
-                        </div>
-                        <div class="monitoring-metrics">
-                            <div class="metric-item">
-                                <div class="metric-icon">🌐</div>
-                                <div class="metric-info">
-                                    <span class="metric-label">Network Requests</span>
-                                    <span class="metric-value" id="networkRequests">0</span>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon">🔄</div>
-                                <div class="metric-info">
-                                    <span class="metric-label">CPU Usage</span>
-                                    <span class="metric-value" id="cpuUsage">Normal</span>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon">📊</div>
-                                <div class="metric-info">
-                                    <span class="metric-label">Memory Usage</span>
-                                    <span class="metric-value" id="memoryUsage">Low</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Threats View -->
-            <div class="view-content" id="threatsView">
-                <div class="view-header">
-                    <h2 class="view-title">Threat Reports</h2>
-                    <div class="header-actions">
-                        <button class="action-btn" id="exportThreats">Export</button>
-                        <button class="action-btn danger" id="clearThreats">Clear All</button>
-                    </div>
-                </div>
-                
-                <div class="threats-content">
-                    <!-- Threat Summary -->
-                    <div class="threat-summary">
-                        <div class="summary-item critical">
-                            <div class="summary-number" id="criticalThreats">0</div>
-                            <div class="summary-label">Critical</div>
-                        </div>
-                        <div class="summary-item high">
-                            <div class="summary-number" id="highThreats">0</div>
-                            <div class="summary-label">High</div>
-                        </div>
-                        <div class="summary-item medium">
-                            <div class="summary-number" id="mediumThreats">0</div>
-                            <div class="summary-label">Medium</div>
-                        </div>
-                        <div class="summary-item low">
-                            <div class="summary-number" id="lowThreats">0</div>
-                            <div class="summary-label">Low</div>
-                        </div>
-                    </div>
-
-                    <!-- Threat List -->
-                    <div class="feature-card threats-list-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Detected Threats</h3>
-                            <select class="filter-select" id="threatFilter">
-                                <option value="all">All Threats</option>
-                                <option value="critical">Critical</option>
-                                <option value="high">High Risk</option>
-                                <option value="medium">Medium Risk</option>
-                                <option value="low">Low Risk</option>
-                            </select>
-                        </div>
-                        <div class="threats-list" id="threatsList">
-                            <div class="empty-state">
-                                <div class="empty-icon">🛡️</div>
-                                <div class="empty-title">No Threats Detected</div>
-                                <div class="empty-subtitle">Your browsing is secure</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings View -->
-            <div class="view-content" id="settingsView">
-                <div class="view-header">
-                    <h2 class="view-title">Security Settings</h2>
-                    <button class="save-btn" id="saveSettings">
-                        <span class="btn-icon">💾</span>
-                        <span>Save Changes</span>
-                    </button>
-                </div>
-                
-                <div class="settings-content">
-                    <!-- Protection Settings -->
-                    <div class="feature-card settings-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Protection Modules</h3>
-                            <div class="settings-info">Configure your security preferences</div>
-                        </div>
-                        <div class="settings-grid">
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Cryptocurrency Mining Detection</div>
-                                    <div class="setting-description">Advanced detection of crypto mining scripts</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="cryptoMining" checked>
-                                    <label for="cryptoMining" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Clipboard Protection</div>
-                                    <div class="setting-description">Monitor unauthorized clipboard access</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="clipboardProtection" checked>
-                                    <label for="clipboardProtection" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Form Submission Monitoring</div>
-                                    <div class="setting-description">Detect automatic form submissions</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="formMonitoring" checked>
-                                    <label for="formMonitoring" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Phishing Protection</div>
-                                    <div class="setting-description">Block known phishing attempts</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="phishingProtection" checked>
-                                    <label for="phishingProtection" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Network Request Monitoring</div>
-                                    <div class="setting-description">Monitor suspicious network activity</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="networkMonitoring" checked>
-                                    <label for="networkMonitoring" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-row">
-                                <div class="setting-info">
-                                    <div class="setting-title">Real-time Notifications</div>
-                                    <div class="setting-description">Show desktop alerts for threats</div>
-                                </div>
-                                <div class="setting-control">
-                                    <input type="checkbox" id="notifications" checked>
-                                    <label for="notifications" class="modern-toggle"></label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Security Level -->
-                    <div class="feature-card security-level-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Security Level</h3>
-                            <div class="settings-info">Choose your protection intensity</div>
-                        </div>
-                        <div class="security-levels">
-                            <label class="level-option">
-                                <input type="radio" name="securityLevel" value="low">
-                                <div class="level-card low">
-                                    <div class="level-icon">🟢</div>
-                                    <div class="level-name">Basic</div>
-                                    <div class="level-desc">Light protection with minimal alerts</div>
-                                </div>
-                            </label>
-                            
-                            <label class="level-option">
-                                <input type="radio" name="securityLevel" value="medium" checked>
-                                <div class="level-card medium">
-                                    <div class="level-icon">🟡</div>
-                                    <div class="level-name">Standard</div>
-                                    <div class="level-desc">Balanced protection and performance</div>
-                                </div>
-                            </label>
-                            
-                            <label class="level-option">
-                                <input type="radio" name="securityLevel" value="high">
-                                <div class="level-card high">
-                                    <div class="level-icon">🔴</div>
-                                    <div class="level-name">Maximum</div>
-                                    <div class="level-desc">Highest protection with strict monitoring</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Domain Management -->
-                    <div class="feature-card domain-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Domain Management</h3>
-                            <div class="settings-info">Manage trusted and blocked domains</div>
-                        </div>
-                        
-                        <div class="domain-management">
-                            <div class="domain-section">
-                                <h4 class="domain-title">✅ Trusted Domains</h4>
-                                <div class="domain-input-group">
-                                    <input type="text" id="trustedDomainInput" placeholder="example.com" class="domain-input">
-                                    <button class="add-btn" id="addTrustedDomain">Add</button>
-                                </div>
-                                <div class="domain-list" id="trustedDomainsList">
-                                    <!-- Trusted domains will be populated here -->
-                                </div>
-                            </div>
-                            
-                            <div class="domain-section">
-                                <h4 class="domain-title">❌ Blocked Domains</h4>
-                                <div class="domain-input-group">
-                                    <input type="text" id="blockedDomainInput" placeholder="malicious-site.com" class="domain-input">
-                                    <button class="add-btn danger" id="addBlockedDomain">Block</button>
-                                </div>
-                                <div class="domain-list" id="blockedDomainsList">
-                                    <!-- Blocked domains will be populated here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Bottom Action Bar -->
-        <footer class="action-bar">
-            <button class="action-button primary" id="emergencyStop">
-                <span class="action-icon">🛑</span>
-                <span class="action-label">Emergency Stop</span>
-            </button>
-            <button class="action-button secondary" id="exportData">
-                <span class="action-icon">📥</span>
-                <span class="action-label">Export Data</span>
-            </button>
-            <button class="action-button secondary" id="helpSupport">
-                <span class="action-icon">❓</span>
-                <span class="action-label">Help</span>
-            </button>
-        </footer>
+  <div class="extension-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="brand">
+          <div class="brand-icon">🛡️</div>
+          <div class="brand-info">
+            <div class="brand-name">Tab Guard</div>
+            <div class="brand-tagline">Security Monitor</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div id="statusBadge" class="status-badge protected">
+            <div class="status-icon">✓</div>
+            <div class="status-text">Protected</div>
+          </div>
+          <button id="refreshBtn" class="btn-refresh" title="Refresh Data">
+            <span>↻</span>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <script src="popup.js"></script>
+    <!-- Navigation -->
+    <div class="navigation">
+      <button class="nav-btn active" data-view="dashboard">
+        <div class="nav-icon">📊</div>
+        <div class="nav-text">Dashboard</div>
+      </button>
+      <button class="nav-btn" data-view="protection">
+        <div class="nav-icon">🛡️</div>
+        <div class="nav-text">Protection</div>
+      </button>
+      <button class="nav-btn" data-view="threats">
+        <div class="nav-icon">⚠️</div>
+        <div class="nav-text">Threats</div>
+      </button>
+      <button class="nav-btn" data-view="settings">
+        <div class="nav-icon">⚙️</div>
+        <div class="nav-text">Settings</div>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Dashboard View -->
+      <div id="dashboardView" class="view active">
+        <div class="view-header">
+          <h2>Security Dashboard</h2>
+          <div class="live-indicator">
+            <div class="live-dot"></div>
+            <span>Live</span>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <!-- Security Stats -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Security Statistics</h3>
+              <div class="card-subtitle">Real-time monitoring</div>
+            </div>
+            <div class="card-content">
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-number" id="threatsBlocked">0</div>
+                  <div class="stat-label">Threats Blocked</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="tabsMonitored">0</div>
+                  <div class="stat-label">Tabs Monitored</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="activitiesDetected">0</div>
+                  <div class="stat-label">Activities Detected</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Threat Level -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Current Threat Level</h3>
+              <div class="card-subtitle">Overall security status</div>
+            </div>
+            <div class="card-content">
+              <div class="threat-display">
+                <div id="threatCircle" class="threat-circle">
+                  <div id="threatText" class="threat-text">LOW</div>
+                </div>
+                <div class="threat-details">
+                  <div class="detail-item">
+                    <span class="label">Risk Score:</span>
+                    <span class="value" id="riskScore">15</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Active Threats:</span>
+                    <span class="value" id="activeThreats">0</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Security Level:</span>
+                    <span class="value" id="securityLevel">HIGH</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="card full-width">
+            <div class="card-header">
+              <h3>Recent Security Activity</h3>
+              <button id="viewAllBtn" class="btn-link">View All</button>
+            </div>
+            <div class="card-content">
+              <div id="activityList" class="activity-list">
+                <div class="activity-item safe">
+                  <div class="activity-icon">✅</div>
+                  <div class="activity-details">
+                    <div class="activity-title">System Active</div>
+                    <div class="activity-time">Just now</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Protection Modules -->
+          <div class="card full-width">
+            <div class="card-header">
+              <h3>Protection Modules</h3>
+              <div class="master-toggle">
+                <input type="checkbox" id="masterSwitch" checked>
+                <label for="masterSwitch" class="toggle-slider"></label>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="modules-grid">
+                <div class="module-item">
+                  <div class="module-icon">⚡</div>
+                  <div class="module-info">
+                    <span class="module-name">Crypto Mining</span>
+                    <span class="module-status">Active</span>
+                  </div>
+                  <div class="module-indicator active"></div>
+                </div>
+                <div class="module-item">
+                  <div class="module-icon">📋</div>
+                  <div class="module-info">
+                    <span class="module-name">Clipboard Guard</span>
+                    <span class="module-status">Active</span>
+                  </div>
+                  <div class="module-indicator active"></div>
+                </div>
+                <div class="module-item">
+                  <div class="module-icon">📝</div>
+                  <div class="module-info">
+                    <span class="module-name">Form Monitor</span>
+                    <span class="module-status">Active</span>
+                  </div>
+                  <div class="module-indicator active"></div>
+                </div>
+                <div class="module-item">
+                  <div class="module-icon">🌐</div>
+                  <div class="module-info">
+                    <span class="module-name">Network Guard</span>
+                    <span class="module-status">Active</span>
+                  </div>
+                  <div class="module-indicator active"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Protection View -->
+      <div id="protectionView" class="view">
+        <div class="view-header">
+          <h2>Tab Protection</h2>
+          <div class="header-actions">
+            <button id="quickScanBtn" class="btn-secondary">Quick Scan</button>
+            <button id="scanAllBtn" class="btn-primary">Scan All</button>
+            <button id="refreshTabsBtn" class="btn-refresh">↻</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <div class="card full-width">
+            <div class="card-header">
+              <h3>Current Tabs</h3>
+              <div class="card-subtitle">Real-time monitoring status</div>
+            </div>
+            <div class="card-content">
+              <div id="tabsContainer" class="tabs-container">
+                <div class="loading">Loading tabs...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threats View -->
+      <div id="threatsView" class="view">
+        <div class="view-header">
+          <h2>Threat Reports</h2>
+          <div class="header-actions">
+            <select id="threatFilter" class="filter-select">
+              <option value="all">All Threats</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <button id="exportBtn" class="btn-secondary">Export</button>
+            <button id="clearBtn" class="btn-danger">Clear</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <!-- Threat Summary -->
+          <div class="summary-grid">
+            <div class="summary-card critical">
+              <div class="summary-number" id="criticalCount">0</div>
+              <div class="summary-label">Critical</div>
+            </div>
+            <div class="summary-card high">
+              <div class="summary-number" id="highCount">0</div>
+              <div class="summary-label">High</div>
+            </div>
+            <div class="summary-card medium">
+              <div class="summary-number" id="mediumCount">0</div>
+              <div class="summary-label">Medium</div>
+            </div>
+            <div class="summary-card low">
+              <div class="summary-number" id="lowCount">0</div>
+              <div class="summary-label">Low</div>
+            </div>
+          </div>
+
+          <!-- Threats List -->
+          <div class="card full-width">
+            <div class="card-header">
+              <h3>Recent Threats</h3>
+              <div class="card-subtitle">Last 24 hours</div>
+            </div>
+            <div class="card-content">
+              <div id="threatsList" class="threats-list">
+                <div class="empty-state">
+                  <div class="empty-icon">🛡️</div>
+                  <div class="empty-title">No Threats Detected</div>
+                  <div class="empty-subtitle">Your browsing is secure</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="settingsView" class="view">
+        <div class="view-header">
+          <h2>Security Settings</h2>
+          <div class="header-actions">
+            <button id="saveBtn" class="btn-primary">Save Changes</button>
+          </div>
+        </div>
+
+        <div class="content-grid">
+          <!-- Security Level -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Security Level</h3>
+              <div class="card-subtitle">Choose protection intensity</div>
+            </div>
+            <div class="card-content">
+              <div class="security-levels">
+                <label class="level-option">
+                  <input type="radio" name="securityLevel" value="low">
+                  <div class="level-card">
+                    <div class="level-indicator low"></div>
+                    <div class="level-info">
+                      <div class="level-name">Basic Protection</div>
+                      <div class="level-desc">Essential security features only</div>
+                    </div>
+                  </div>
+                </label>
+                <label class="level-option">
+                  <input type="radio" name="securityLevel" value="medium" checked>
+                  <div class="level-card">
+                    <div class="level-indicator medium"></div>
+                    <div class="level-info">
+                      <div class="level-name">Balanced Protection</div>
+                      <div class="level-desc">Recommended for most users</div>
+                    </div>
+                  </div>
+                </label>
+                <label class="level-option">
+                  <input type="radio" name="securityLevel" value="high">
+                  <div class="level-card">
+                    <div class="level-indicator high"></div>
+                    <div class="level-info">
+                      <div class="level-name">Maximum Protection</div>
+                      <div class="level-desc">Highest security, may affect performance</div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Protection Settings -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Protection Features</h3>
+              <div class="card-subtitle">Enable or disable specific protections</div>
+            </div>
+            <div class="card-content">
+              <div class="settings-list">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Crypto Mining Detection</div>
+                    <div class="setting-desc">Block cryptocurrency mining scripts</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="cryptoMining" checked>
+                    <label for="cryptoMining" class="toggle-slider"></label>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Clipboard Protection</div>
+                    <div class="setting-desc">Monitor clipboard access attempts</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="clipboardProtection" checked>
+                    <label for="clipboardProtection" class="toggle-slider"></label>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Form Monitoring</div>
+                    <div class="setting-desc">Detect automatic form submissions</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="formMonitoring" checked>
+                    <label for="formMonitoring" class="toggle-slider"></label>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Phishing Protection</div>
+                    <div class="setting-desc">Block known phishing attempts</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="phishingProtection" checked>
+                    <label for="phishingProtection" class="toggle-slider"></label>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Network Monitoring</div>
+                    <div class="setting-desc">Monitor suspicious network requests</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="networkMonitoring" checked>
+                    <label for="networkMonitoring" class="toggle-slider"></label>
+                  </div>
+                </div>
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <div class="setting-title">Security Notifications</div>
+                    <div class="setting-desc">Show alerts for threats</div>
+                  </div>
+                  <div class="setting-control">
+                    <input type="checkbox" id="notifications" checked>
+                    <label for="notifications" class="toggle-slider"></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Domain Management -->
+          <div class="card full-width">
+            <div class="card-header">
+              <h3>Domain Management</h3>
+              <div class="card-subtitle">Manage trusted and blocked domains</div>
+            </div>
+            <div class="card-content">
+              <div class="domain-section">
+                <h4>Trusted Domains</h4>
+                <div class="domain-input-group">
+                  <input type="text" id="trustedInput" class="domain-input" placeholder="Enter domain (e.g., example.com)">
+                  <button id="addTrustedBtn" class="btn-add">Add</button>
+                </div>
+                <div id="trustedList" class="domain-list"></div>
+              </div>
+
+              <div class="domain-section">
+                <h4>Blocked Domains</h4>
+                <div class="domain-input-group">
+                  <input type="text" id="blockedInput" class="domain-input" placeholder="Enter domain to block">
+                  <button id="addBlockedBtn" class="btn-add danger">Block</button>
+                </div>
+                <div id="blockedList" class="domain-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button id="emergencyBtn" class="footer-btn emergency">
+        <div class="btn-icon">🚨</div>
+        <div class="btn-text">Emergency</div>
+      </button>
+      <button id="exportAllBtn" class="footer-btn">
+        <div class="btn-icon">📊</div>
+        <div class="btn-text">Export</div>
+      </button>
+      <button id="helpBtn" class="footer-btn">
+        <div class="btn-icon">❓</div>
+        <div class="btn-text">Help</div>
+      </button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>

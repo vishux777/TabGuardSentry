@@ -6,8 +6,8 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "*coinhive*",
-      "resourceTypes": ["script"]
+      "urlFilter": "*malware-domain.com*",
+      "resourceTypes": ["main_frame", "sub_frame"]
     }
   },
   {
@@ -17,8 +17,8 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "*cryptonight*",
-      "resourceTypes": ["script"]
+      "urlFilter": "*phishing-site.net*",
+      "resourceTypes": ["main_frame", "sub_frame"]
     }
   },
   {
@@ -28,8 +28,30 @@
       "type": "block"
     },
     "condition": {
-      "urlFilter": "*crypto-loot*",
-      "resourceTypes": ["script"]
+      "urlFilter": "*crypto-miner.org*",
+      "resourceTypes": ["script", "xmlhttprequest"]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "*coinhive*",
+      "resourceTypes": ["script", "xmlhttprequest"]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "regexFilter": ".*mining.*pool.*",
+      "resourceTypes": ["script", "websocket"]
     }
   }
 ]
