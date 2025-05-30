@@ -142,4 +142,4 @@ Contributions are welcome! If you have suggestions for improvements, bug fixes, 
 
 ## License 📄
 
-Please see the [LICENSE](LICENSE) file for full details.
+Please see the LICENSE file for full details.
