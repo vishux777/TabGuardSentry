@@ -1,12 +1,13 @@
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="shieldGradient16" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0066ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0052cc;stop-opacity:1" />
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z" 
-        fill="url(#shieldGradient16)" stroke="#004499" stroke-width="1"/>
-  <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="12" cy="8" r="1.5" fill="white" opacity="0.8"/>
+  <rect width="16" height="16" rx="3" fill="url(#grad1)"/>
+  <path d="M8 2L10.5 5H5.5L8 2Z" fill="white" opacity="0.9"/>
+  <rect x="4" y="5" width="8" height="7" rx="1" fill="white" opacity="0.9"/>
+  <circle cx="8" cy="8.5" r="1.5" fill="url(#grad1)"/>
+  <rect x="7" y="10" width="2" height="2" fill="url(#grad1)"/>
 </svg>

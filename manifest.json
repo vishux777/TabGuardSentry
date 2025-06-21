@@ -8,8 +8,6 @@
     "scripting",
     "activeTab",
     "storage",
-    "clipboardRead",
-    "clipboardWrite",
     "notifications",
     "declarativeNetRequest",
     "webRequest",
@@ -52,5 +50,11 @@
       "enabled": true,
       "path": "rules.json"
     }]
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

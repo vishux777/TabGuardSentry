@@ -322,69 +322,49 @@
           <!-- Protection Settings -->
           <div class="card">
             <div class="card-header">
-              <h3>Protection Features</h3>
-              <div class="card-subtitle">Enable or disable specific protections</div>
+              <h3>Protection Modules</h3>
+              <div class="card-subtitle">Enable or disable specific features</div>
             </div>
             <div class="card-content">
               <div class="settings-list">
                 <div class="setting-item">
                   <div class="setting-info">
-                    <div class="setting-title">Crypto Mining Detection</div>
+                    <div class="setting-name">Crypto Mining Detection</div>
                     <div class="setting-desc">Block cryptocurrency mining scripts</div>
                   </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="cryptoMining" checked>
-                    <label for="cryptoMining" class="toggle-slider"></label>
+                  <div class="setting-toggle">
+                    <input type="checkbox" id="enableCryptoMining" checked>
+                    <label for="enableCryptoMining" class="toggle-slider"></label>
                   </div>
                 </div>
                 <div class="setting-item">
                   <div class="setting-info">
-                    <div class="setting-title">Clipboard Protection</div>
+                    <div class="setting-name">Clipboard Protection</div>
                     <div class="setting-desc">Monitor clipboard access attempts</div>
                   </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="clipboardProtection" checked>
-                    <label for="clipboardProtection" class="toggle-slider"></label>
+                  <div class="setting-toggle">
+                    <input type="checkbox" id="enableClipboard" checked>
+                    <label for="enableClipboard" class="toggle-slider"></label>
                   </div>
                 </div>
                 <div class="setting-item">
                   <div class="setting-info">
-                    <div class="setting-title">Form Monitoring</div>
-                    <div class="setting-desc">Detect automatic form submissions</div>
+                    <div class="setting-name">Form Monitoring</div>
+                    <div class="setting-desc">Detect suspicious form submissions</div>
                   </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="formMonitoring" checked>
-                    <label for="formMonitoring" class="toggle-slider"></label>
-                  </div>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-title">Phishing Protection</div>
-                    <div class="setting-desc">Block known phishing attempts</div>
-                  </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="phishingProtection" checked>
-                    <label for="phishingProtection" class="toggle-slider"></label>
+                  <div class="setting-toggle">
+                    <input type="checkbox" id="enableFormMonitor" checked>
+                    <label for="enableFormMonitor" class="toggle-slider"></label>
                   </div>
                 </div>
                 <div class="setting-item">
                   <div class="setting-info">
-                    <div class="setting-title">Network Monitoring</div>
-                    <div class="setting-desc">Monitor suspicious network requests</div>
+                    <div class="setting-name">Network Guard</div>
+                    <div class="setting-desc">Monitor network requests for threats</div>
                   </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="networkMonitoring" checked>
-                    <label for="networkMonitoring" class="toggle-slider"></label>
-                  </div>
-                </div>
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <div class="setting-title">Security Notifications</div>
-                    <div class="setting-desc">Show alerts for threats</div>
-                  </div>
-                  <div class="setting-control">
-                    <input type="checkbox" id="notifications" checked>
-                    <label for="notifications" class="toggle-slider"></label>
+                  <div class="setting-toggle">
+                    <input type="checkbox" id="enableNetworkGuard" checked>
+                    <label for="enableNetworkGuard" class="toggle-slider"></label>
                   </div>
                 </div>
               </div>
@@ -392,7 +372,7 @@
           </div>
 
           <!-- Domain Management -->
-          <div class="card full-width">
+          <div class="card">
             <div class="card-header">
               <h3>Domain Management</h3>
               <div class="card-subtitle">Manage trusted and blocked domains</div>
@@ -400,20 +380,23 @@
             <div class="card-content">
               <div class="domain-section">
                 <h4>Trusted Domains</h4>
-                <div class="domain-input-group">
-                  <input type="text" id="trustedInput" class="domain-input" placeholder="Enter domain (e.g., example.com)">
+                <div class="domain-input">
+                  <input type="text" id="trustedInput" placeholder="Enter domain (e.g., example.com)">
                   <button id="addTrustedBtn" class="btn-add">Add</button>
                 </div>
-                <div id="trustedList" class="domain-list"></div>
+                <div id="trustedList" class="domain-list">
+                  <!-- Trusted domains will be populated here -->
+                </div>
               </div>
-
               <div class="domain-section">
                 <h4>Blocked Domains</h4>
-                <div class="domain-input-group">
-                  <input type="text" id="blockedInput" class="domain-input" placeholder="Enter domain to block">
+                <div class="domain-input">
+                  <input type="text" id="blockedInput" placeholder="Enter domain (e.g., malicious.com)">
                   <button id="addBlockedBtn" class="btn-add danger">Block</button>
                 </div>
-                <div id="blockedList" class="domain-list"></div>
+                <div id="blockedList" class="domain-list">
+                  <!-- Blocked domains will be populated here -->
+                </div>
               </div>
             </div>
           </div>
@@ -423,18 +406,11 @@
 
     <!-- Footer -->
     <div class="footer">
-      <button id="emergencyBtn" class="footer-btn emergency">
-        <div class="btn-icon">🚨</div>
-        <div class="btn-text">Emergency</div>
-      </button>
-      <button id="exportAllBtn" class="footer-btn">
-        <div class="btn-icon">📊</div>
-        <div class="btn-text">Export</div>
-      </button>
-      <button id="helpBtn" class="footer-btn">
-        <div class="btn-icon">❓</div>
-        <div class="btn-text">Help</div>
-      </button>
+      <div class="footer-actions">
+        <button id="emergencyBtn" class="btn-danger">Emergency Stop</button>
+        <button id="exportAllBtn" class="btn-secondary">Export Data</button>
+        <button id="helpBtn" class="btn-link">Help</button>
+      </div>
     </div>
   </div>
 

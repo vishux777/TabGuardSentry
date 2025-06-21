@@ -1,0 +1,619 @@
+// Tab Guard Advanced Background Script
+console.log('Tab Guard v3.0 - Background script loaded');
+
+class TabGuardBackground {
+  constructor() {
+    this.stats = {
+      threatsBlocked: 0,
+      tabsMonitored: 0,
+      activitiesDetected: 0,
+      totalScans: 0
+    };
+    
+    this.threatReports = [];
+    this.activityLogs = [];
+    this.tabData = new Map();
+    this.settings = {
+      securityLevel: 'medium',
+      enableCryptoMining: true,
+      enableClipboard: true,
+      enableFormMonitor: true,
+      enableNetworkGuard: true,
+      enablePermissionMonitor: true,
+      enableDownloadMonitor: true,
+      enableAdvancedThreats: true,
+      trustedDomains: ['google.com', 'github.com', 'stackoverflow.com'],
+      blockedDomains: []
+    };
+    
+    this.init();
+  }
+
+  async init() {
+    try {
+      await this.loadSettings();
+      await this.loadData();
+      this.setupAlarms();
+      this.setupContextMenus();
+      this.setupMessageHandlers();
+      this.setupTabListeners();
+      console.log('Tab Guard Background initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Tab Guard Background:', error);
+    }
+  }
+
+  async loadSettings() {
+    try {
+      const result = await chrome.storage.sync.get(['tabGuardSettings']);
+      if (result.tabGuardSettings) {
+        this.settings = { ...this.settings, ...result.tabGuardSettings };
+      }
+      console.log('Settings loaded:', this.settings);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  }
+
+  async saveSettings() {
+    try {
+      await chrome.storage.sync.set({ tabGuardSettings: this.settings });
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      throw error;
+    }
+  }
+
+  async loadData() {
+    try {
+      const result = await chrome.storage.local.get([
+        'tabGuardStats',
+        'tabGuardReports',
+        'tabGuardLogs'
+      ]);
+      
+      if (result.tabGuardStats) {
+        this.stats = { ...this.stats, ...result.tabGuardStats };
+      }
+      
+      if (result.tabGuardReports) {
+        this.threatReports = result.tabGuardReports;
+      }
+      
+      if (result.tabGuardLogs) {
+        this.activityLogs = result.tabGuardLogs;
+      }
+      
+      console.log('Data loaded successfully');
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  }
+
+  async saveData() {
+    try {
+      await chrome.storage.local.set({
+        tabGuardStats: this.stats,
+        tabGuardReports: this.threatReports.slice(-1000), // Keep last 1000 reports
+        tabGuardLogs: this.activityLogs.slice(-500) // Keep last 500 logs
+      });
+      console.log('Data saved successfully');
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
+  }
+
+  setupAlarms() {
+    try {
+      // Cleanup alarm
+      chrome.alarms.create('cleanup', { periodInMinutes: 60 });
+      
+      // Stats update alarm
+      chrome.alarms.create('updateStats', { periodInMinutes: 5 });
+      
+      chrome.alarms.onAlarm.addListener((alarm) => {
+        switch (alarm.name) {
+          case 'cleanup':
+            this.performCleanup();
+            break;
+          case 'updateStats':
+            this.updateTabStats();
+            break;
+        }
+      });
+      
+      console.log('Alarms setup successfully');
+    } catch (error) {
+      console.error('Error setting up alarms:', error);
+    }
+  }
+
+  setupContextMenus() {
+    try {
+      chrome.contextMenus.removeAll(() => {
+        chrome.contextMenus.create({
+          id: 'scanPage',
+          title: 'Scan this page for threats',
+          contexts: ['page']
+        });
+        
+        chrome.contextMenus.create({
+          id: 'blockDomain',
+          title: 'Block this domain',
+          contexts: ['page']
+        });
+        
+        chrome.contextMenus.create({
+          id: 'trustDomain',
+          title: 'Trust this domain',
+          contexts: ['page']
+        });
+        
+        console.log('Context menus setup successfully');
+      });
+
+      chrome.contextMenus.onClicked.addListener((info, tab) => {
+        this.handleContextMenuClick(info, tab);
+      });
+    } catch (error) {
+      console.error('Error setting up context menus:', error);
+    }
+  }
+
+  setupMessageHandlers() {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      this.handleMessage(request, sender, sendResponse);
+      return true; // Keep message channel open for async response
+    });
+  }
+
+  setupTabListeners() {
+    chrome.tabs.onActivated.addListener((activeInfo) => {
+      this.updateTabMonitoring(activeInfo.tabId);
+    });
+
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+      if (changeInfo.status === 'complete') {
+        this.scanTab(tabId, tab);
+      }
+    });
+
+    chrome.tabs.onRemoved.addListener((tabId) => {
+      this.tabData.delete(tabId);
+    });
+  }
+
+  async handleMessage(request, sender, sendResponse) {
+    try {
+      console.log('Received message:', request.action);
+      
+      switch (request.action) {
+        case 'REPORT_SUSPICIOUS_ACTIVITY':
+          await this.handleSuspiciousActivity(request.data, sender);
+          sendResponse({ success: true });
+          break;
+
+        case 'GET_MONITORING_DATA':
+          const data = await this.getMonitoringData();
+          sendResponse({ success: true, ...data });
+          break;
+
+        case 'GET_ACTIVITY_LOGS':
+          sendResponse({ 
+            success: true, 
+            logs: this.activityLogs.slice(-50) 
+          });
+          break;
+
+        case 'GET_THREAT_REPORTS':
+          sendResponse({ 
+            success: true, 
+            reports: this.threatReports.slice(-100) 
+          });
+          break;
+
+        case 'UPDATE_SETTINGS':
+          await this.updateSettings(request.settings);
+          sendResponse({ success: true });
+          break;
+
+        case 'EXPORT_DATA':
+          const exportData = await this.exportData();
+          sendResponse({ success: true, data: exportData });
+          break;
+
+        case 'CLEAR_THREATS':
+          await this.clearThreats();
+          sendResponse({ success: true });
+          break;
+
+        case 'SCAN_TAB':
+          await this.scanSpecificTab(request.tabId);
+          sendResponse({ success: true });
+          break;
+
+        case 'EMERGENCY_STOP':
+          await this.emergencyStop();
+          sendResponse({ success: true });
+          break;
+
+        default:
+          console.warn('Unknown action:', request.action);
+          sendResponse({ success: false, error: 'Unknown action' });
+      }
+    } catch (error) {
+      console.error('Error handling message:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  }
+
+  async handleSuspiciousActivity(data, sender) {
+    try {
+      const tabId = sender.tab?.id;
+      const url = sender.tab?.url || data.url;
+      
+      // Create threat report
+      const report = {
+        id: Date.now() + Math.random(),
+        type: data.type,
+        severity: this.calculateSeverity(data.riskScore || 0),
+        timestamp: Date.now(),
+        url: url,
+        tabId: tabId,
+        data: data
+      };
+
+      this.threatReports.push(report);
+      this.stats.threatsBlocked++;
+      this.stats.activitiesDetected++;
+
+      // Update tab data
+      if (tabId && this.tabData.has(tabId)) {
+        const tabInfo = this.tabData.get(tabId);
+        tabInfo.riskScore = Math.max(tabInfo.riskScore, data.riskScore || 0);
+        tabInfo.suspiciousActivities.push(data);
+        tabInfo.threatLevel = this.calculateThreatLevel(tabInfo.riskScore);
+      } else if (tabId) {
+        this.tabData.set(tabId, {
+          id: tabId,
+          url: url,
+          title: sender.tab?.title || 'Unknown',
+          riskScore: data.riskScore || 0,
+          suspiciousActivities: [data],
+          threatLevel: this.calculateThreatLevel(data.riskScore || 0),
+          lastScanned: Date.now()
+        });
+      }
+
+      // Show notification for high-risk threats
+      if (data.riskScore >= 70) {
+        this.showThreatNotification(report);
+      }
+
+      // Save data
+      await this.saveData();
+
+      // Log activity
+      this.logActivity({
+        type: data.type,
+        severity: report.severity,
+        timestamp: Date.now(),
+        url: url,
+        details: data.reason || 'Suspicious activity detected'
+      });
+      
+      console.log('Suspicious activity handled:', data.type);
+    } catch (error) {
+      console.error('Error handling suspicious activity:', error);
+    }
+  }
+
+  calculateSeverity(riskScore) {
+    if (riskScore >= 80) return 'critical';
+    if (riskScore >= 60) return 'high';
+    if (riskScore >= 30) return 'medium';
+    return 'low';
+  }
+
+  calculateThreatLevel(riskScore) {
+    if (riskScore >= 70) return 'danger';
+    if (riskScore >= 40) return 'warning';
+    return 'safe';
+  }
+
+  async showThreatNotification(report) {
+    try {
+      if (chrome.notifications) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/icon48.svg',
+          title: 'Tab Guard - Threat Detected',
+          message: `${report.type}: ${report.data.reason || 'Suspicious activity detected'}`,
+          priority: 2
+        });
+      }
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
+  }
+
+  logActivity(activity) {
+    this.activityLogs.push(activity);
+    // Keep only last 500 activities
+    if (this.activityLogs.length > 500) {
+      this.activityLogs = this.activityLogs.slice(-500);
+    }
+  }
+
+  async getMonitoringData() {
+    try {
+      await this.updateTabStats();
+      
+      return {
+        realTimeStats: this.stats,
+        tabData: Object.fromEntries(this.tabData),
+        recentActivities: this.activityLogs.slice(-10),
+        settings: this.settings
+      };
+    } catch (error) {
+      console.error('Error getting monitoring data:', error);
+      return {
+        realTimeStats: this.stats,
+        tabData: {},
+        recentActivities: [],
+        settings: this.settings
+      };
+    }
+  }
+
+  async updateTabStats() {
+    try {
+      const tabs = await chrome.tabs.query({});
+      this.stats.tabsMonitored = tabs.length;
+      this.stats.totalScans++;
+      
+      // Update tab data for active tabs
+      for (const tab of tabs) {
+        if (!this.tabData.has(tab.id)) {
+          this.tabData.set(tab.id, {
+            id: tab.id,
+            url: tab.url,
+            title: tab.title,
+            riskScore: 0,
+            suspiciousActivities: [],
+            threatLevel: 'safe',
+            lastScanned: Date.now()
+          });
+        }
+      }
+      
+      await this.saveData();
+    } catch (error) {
+      console.error('Error updating tab stats:', error);
+    }
+  }
+
+  async scanTab(tabId, tab) {
+    try {
+      if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+        return;
+      }
+
+      const tabInfo = {
+        id: tabId,
+        url: tab.url,
+        title: tab.title,
+        riskScore: 0,
+        suspiciousActivities: [],
+        threatLevel: 'safe',
+        lastScanned: Date.now()
+      };
+
+      // Check against blocked domains
+      const domain = new URL(tab.url).hostname;
+      if (this.settings.blockedDomains.includes(domain)) {
+        tabInfo.riskScore = 90;
+        tabInfo.threatLevel = 'danger';
+        tabInfo.suspiciousActivities.push({
+          type: 'BLOCKED_DOMAIN',
+          reason: 'Domain is in blocked list',
+          riskScore: 90
+        });
+      }
+
+      this.tabData.set(tabId, tabInfo);
+    } catch (error) {
+      console.error('Error scanning tab:', error);
+    }
+  }
+
+  async scanSpecificTab(tabId) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      await this.scanTab(tabId, tab);
+      
+      // Inject content script to perform deep scan
+      if (tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          function: () => {
+            // Trigger a comprehensive scan
+            if (window.tabGuardInjected) {
+              console.log('Performing comprehensive security scan...');
+              // The content script will handle the deep scanning
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error scanning specific tab:', error);
+    }
+  }
+
+  async updateTabMonitoring(tabId) {
+    try {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('chrome-extension://')) {
+        await this.scanTab(tabId, tab);
+      }
+    } catch (error) {
+      console.error('Error updating tab monitoring:', error);
+    }
+  }
+
+  async handleContextMenuClick(info, tab) {
+    try {
+      const domain = new URL(tab.url).hostname;
+      
+      switch (info.menuItemId) {
+        case 'scanPage':
+          await this.scanSpecificTab(tab.id);
+          this.showNotification('Page scan completed', 'Threat scan finished');
+          break;
+          
+        case 'blockDomain':
+          if (!this.settings.blockedDomains.includes(domain)) {
+            this.settings.blockedDomains.push(domain);
+            await this.saveSettings();
+            this.showNotification('Domain blocked', `${domain} has been added to blocked list`);
+          }
+          break;
+          
+        case 'trustDomain':
+          if (!this.settings.trustedDomains.includes(domain)) {
+            this.settings.trustedDomains.push(domain);
+            await this.saveSettings();
+            this.showNotification('Domain trusted', `${domain} has been added to trusted list`);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling context menu click:', error);
+    }
+  }
+
+  async updateSettings(newSettings) {
+    try {
+      this.settings = { ...this.settings, ...newSettings };
+      await this.saveSettings();
+      console.log('Settings updated successfully');
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      throw error;
+    }
+  }
+
+  async exportData() {
+    try {
+      return {
+        stats: this.stats,
+        reports: this.threatReports,
+        logs: this.activityLogs,
+        settings: this.settings,
+        exportDate: new Date().toISOString(),
+        version: '3.0.0'
+      };
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      throw error;
+    }
+  }
+
+  async clearThreats() {
+    try {
+      this.threatReports = [];
+      this.activityLogs = [];
+      this.stats.threatsBlocked = 0;
+      this.stats.activitiesDetected = 0;
+      await this.saveData();
+      console.log('Threats cleared successfully');
+    } catch (error) {
+      console.error('Error clearing threats:', error);
+      throw error;
+    }
+  }
+
+  async emergencyStop() {
+    try {
+      // Disable all protection modules
+      this.settings.enableCryptoMining = false;
+      this.settings.enableClipboard = false;
+      this.settings.enableFormMonitor = false;
+      this.settings.enableNetworkGuard = false;
+      this.settings.enablePermissionMonitor = false;
+      this.settings.enableDownloadMonitor = false;
+      this.settings.enableAdvancedThreats = false;
+      
+      await this.saveSettings();
+      
+      this.showNotification('Emergency Stop Activated', 'All security modules have been disabled');
+      console.log('Emergency stop activated');
+    } catch (error) {
+      console.error('Error activating emergency stop:', error);
+      throw error;
+    }
+  }
+
+  async performCleanup() {
+    try {
+      const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      
+      // Clean old reports
+      this.threatReports = this.threatReports.filter(report => report.timestamp > oneWeekAgo);
+      
+      // Clean old logs
+      this.activityLogs = this.activityLogs.filter(log => log.timestamp > oneWeekAgo);
+      
+      // Clean old tab data
+      const activeTabs = await chrome.tabs.query({});
+      const activeTabIds = new Set(activeTabs.map(tab => tab.id));
+      
+      for (const [tabId] of this.tabData) {
+        if (!activeTabIds.has(tabId)) {
+          this.tabData.delete(tabId);
+        }
+      }
+      
+      await this.saveData();
+      console.log('Tab Guard cleanup completed');
+    } catch (error) {
+      console.error('Error performing cleanup:', error);
+    }
+  }
+
+  showNotification(title, message) {
+    try {
+      if (chrome.notifications) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/icon48.svg',
+          title: title,
+          message: message
+        });
+      }
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
+  }
+}
+
+// Initialize Tab Guard Background
+const tabGuard = new TabGuardBackground();
+
+// Handle extension installation/update
+chrome.runtime.onInstalled.addListener((details) => {
+  console.log('Tab Guard installed/updated:', details.reason);
+  if (details.reason === 'install') {
+    try {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon48.svg',
+        title: 'Tab Guard Installed',
+        message: 'Your browser is now protected by Tab Guard Security Monitor'
+      });
+    } catch (error) {
+      console.error('Error showing install notification:', error);
+    }
+  }
+});

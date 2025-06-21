@@ -1,7 +1,6 @@
 // Tab Guard Advanced Content Script
 console.log('Tab Guard v3.0 - Content script loaded');
 
-// Prevent multiple injections
 if (window.tabGuardInjected) {
   console.log('Tab Guard already active on this page');
 } else {
@@ -17,11 +16,13 @@ function initializeTabGuard() {
   monitorPermissionRequests();
   monitorDownloads();
   detectAdvancedThreats();
+  monitorRedirects();
+  monitorPopups();
+  detectKeyloggers();
   
   console.log('Tab Guard monitoring initialized for:', window.location.href);
 }
 
-// Enhanced CPU monitoring for crypto mining detection
 function initializeCpuMonitoring() {
   window.tabGuardCpuMonitor = {
     rafCalls: 0,
@@ -30,7 +31,6 @@ function initializeCpuMonitoring() {
     lastCheck: Date.now()
   };
   
-  // Override requestAnimationFrame
   const originalRAF = window.requestAnimationFrame;
   window.requestAnimationFrame = function(callback) {
     window.tabGuardCpuMonitor.rafCalls++;
@@ -48,7 +48,6 @@ function initializeCpuMonitoring() {
     return originalRAF.call(this, callback);
   };
   
-  // Override setInterval
   const originalSetInterval = window.setInterval;
   window.setInterval = function(callback, delay) {
     window.tabGuardCpuMonitor.intervalCalls++;
@@ -67,7 +66,6 @@ function initializeCpuMonitoring() {
     return originalSetInterval.call(this, callback, delay);
   };
   
-  // Override Worker creation
   const originalWorker = window.Worker;
   if (originalWorker) {
     window.Worker = function(scriptURL, options) {
@@ -85,7 +83,6 @@ function initializeCpuMonitoring() {
     };
   }
   
-  // Monitor WebAssembly (common in crypto miners)
   if (window.WebAssembly) {
     const originalInstantiate = WebAssembly.instantiate;
     WebAssembly.instantiate = function(bytes, importObject) {
@@ -98,9 +95,26 @@ function initializeCpuMonitoring() {
       return originalInstantiate.call(this, bytes, importObject);
     };
   }
+  
+  setInterval(() => {
+    const now = Date.now();
+    const timeDiff = now - window.tabGuardCpuMonitor.lastCheck;
+    const rafRate = window.tabGuardCpuMonitor.rafCalls / (timeDiff / 1000);
+    
+    if (rafRate > 30) {
+      reportSuspiciousActivity('CRYPTO_MINING_DETECTED', {
+        reason: 'Abnormally high requestAnimationFrame usage',
+        rafRate: rafRate,
+        url: window.location.href,
+        riskScore: 55
+      });
+    }
+    
+    window.tabGuardCpuMonitor.rafCalls = 0;
+    window.tabGuardCpuMonitor.lastCheck = now;
+  }, 5000);
 }
 
-// Enhanced clipboard monitoring
 function monitorClipboardAccess() {
   if (navigator.clipboard) {
     if (navigator.clipboard.readText) {
@@ -133,7 +147,6 @@ function monitorClipboardAccess() {
     }
   }
   
-  // Monitor legacy clipboard access
   const originalExecCommand = document.execCommand;
   document.execCommand = function(command, showUI, value) {
     if (['copy', 'cut', 'paste'].includes(command)) {
@@ -149,7 +162,6 @@ function monitorClipboardAccess() {
   };
 }
 
-// Enhanced form submission monitoring
 function monitorFormSubmissions() {
   let userInteractionDetected = false;
   let lastUserInteraction = 0;
@@ -163,7 +175,6 @@ function monitorFormSubmissions() {
     }, true);
   });
   
-  // Override form submit
   const originalSubmit = HTMLFormElement.prototype.submit;
   HTMLFormElement.prototype.submit = function() {
     const timeSinceLastInteraction = Date.now() - lastUserInteraction;
@@ -188,7 +199,6 @@ function monitorFormSubmissions() {
       });
     }
     
-    // Check for credential harvesting
     if (suspiciousActivity.hasPasswordField && suspiciousActivity.hasEmailField) {
       const domain = new URL(this.action || window.location.href).hostname;
       if (domain !== window.location.hostname) {
@@ -204,7 +214,6 @@ function monitorFormSubmissions() {
     return originalSubmit.apply(this, arguments);
   };
   
-  // Monitor submit events
   document.addEventListener('submit', (event) => {
     const timeSinceLastInteraction = Date.now() - lastUserInteraction;
     
@@ -221,7 +230,6 @@ function monitorFormSubmissions() {
   }, true);
 }
 
-// Monitor network requests
 function monitorNetworkRequests() {
   const originalFetch = window.fetch;
   window.fetch = function(resource, options) {
@@ -256,7 +264,6 @@ function monitorNetworkRequests() {
   };
 }
 
-// Monitor permission requests
 function monitorPermissionRequests() {
   if (navigator.permissions) {
     const originalQuery = navigator.permissions.query;
@@ -298,7 +305,6 @@ function monitorPermissionRequests() {
   }
 }
 
-// Monitor downloads
 function monitorDownloads() {
   document.addEventListener('click', (event) => {
     const element = event.target.closest('a');
@@ -323,9 +329,7 @@ function monitorDownloads() {
   }, true);
 }
 
-// Detect advanced threats
 function detectAdvancedThreats() {
-  // Monitor for malicious scripts
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
@@ -342,7 +346,6 @@ function detectAdvancedThreats() {
             }
           }
           
-          // Check for iframe injections
           if (node.tagName === 'IFRAME') {
             const src = node.src;
             if (src && new URL(src).hostname !== window.location.hostname) {
@@ -364,7 +367,6 @@ function detectAdvancedThreats() {
     subtree: true
   });
   
-  // Monitor for CSS-based attacks
   document.addEventListener('DOMContentLoaded', () => {
     const styles = document.querySelectorAll('style');
     styles.forEach(style => {
@@ -378,36 +380,154 @@ function detectAdvancedThreats() {
       }
     });
   });
+  
+  let keyStrokeCount = 0;
+  let keyStrokeTimer = null;
+  
+  document.addEventListener('keydown', () => {
+    keyStrokeCount++;
+    
+    if (keyStrokeTimer) {
+      clearTimeout(keyStrokeTimer);
+    }
+    
+    keyStrokeTimer = setTimeout(() => {
+      if (keyStrokeCount > 50) {
+        reportSuspiciousActivity('EXCESSIVE_KEYSTROKE_MONITORING', {
+          reason: 'Abnormally high keystroke monitoring detected',
+          keyStrokes: keyStrokeCount,
+          url: window.location.href,
+          riskScore: 65
+        });
+      }
+      keyStrokeCount = 0;
+    }, 10000);
+  });
 }
 
-// Report suspicious activity to background script
+function monitorRedirects() {
+  let redirectCount = 0;
+  const originalAssign = window.location.assign;
+  const originalReplace = window.location.replace;
+  
+  window.location.assign = function(url) {
+    redirectCount++;
+    if (redirectCount > 3) {
+      reportSuspiciousActivity('EXCESSIVE_REDIRECTS', {
+        reason: 'Multiple redirects detected',
+        targetUrl: url,
+        redirectCount: redirectCount,
+        url: window.location.href,
+        riskScore: 55
+      });
+    }
+    return originalAssign.call(this, url);
+  };
+  
+  window.location.replace = function(url) {
+    redirectCount++;
+    if (redirectCount > 3) {
+      reportSuspiciousActivity('EXCESSIVE_REDIRECTS', {
+        reason: 'Multiple redirects detected',
+        targetUrl: url,
+        redirectCount: redirectCount,
+        url: window.location.href,
+        riskScore: 55
+      });
+    }
+    return originalReplace.call(this, url);
+  };
+}
+
+function monitorPopups() {
+  const originalOpen = window.open;
+  let popupCount = 0;
+  
+  window.open = function(url, name, specs, replace) {
+    popupCount++;
+    
+    reportSuspiciousActivity('POPUP_DETECTED', {
+      reason: 'Popup window opened',
+      targetUrl: url,
+      popupCount: popupCount,
+      url: window.location.href,
+      riskScore: popupCount > 2 ? 60 : 30
+    });
+    
+    return originalOpen.call(this, url, name, specs, replace);
+  };
+}
+
+function detectKeyloggers() {
+  let suspiciousKeyEvents = 0;
+  const keyEventPatterns = [];
+  
+  document.addEventListener('keydown', (event) => {
+    keyEventPatterns.push({
+      key: event.key,
+      timestamp: Date.now(),
+      target: event.target.tagName
+    });
+    
+    // Keep only recent events
+    const fiveMinutesAgo = Date.now() - 300000;
+    const recentEvents = keyEventPatterns.filter(e => e.timestamp > fiveMinutesAgo);
+    
+    // Check for suspicious patterns
+    if (recentEvents.length > 200) {
+      suspiciousKeyEvents++;
+      
+      if (suspiciousKeyEvents > 3) {
+        reportSuspiciousActivity('POTENTIAL_KEYLOGGER', {
+          reason: 'Excessive keyboard event monitoring detected',
+          eventCount: recentEvents.length,
+          url: window.location.href,
+          riskScore: 70
+        });
+        suspiciousKeyEvents = 0;
+      }
+    }
+  });
+}
+
 function reportSuspiciousActivity(type, data) {
   try {
     chrome.runtime.sendMessage({
-      type: type,
+      action: 'REPORT_SUSPICIOUS_ACTIVITY',
       data: {
-        ...data,
+        type: type,
         timestamp: Date.now(),
-        userAgent: navigator.userAgent,
-        referrer: document.referrer
+        ...data
       }
+    }).catch(error => {
+      console.error('Failed to report suspicious activity:', error);
     });
   } catch (error) {
-    console.error('Failed to report suspicious activity:', error);
+    console.error('Error reporting suspicious activity:', error);
   }
 }
 
-// Expose monitoring status for debugging
-window.tabGuardStatus = {
-  version: '3.0.0',
-  active: true,
-  monitoringTypes: [
-    'CPU Mining Detection',
-    'Clipboard Protection',
-    'Form Monitoring',
-    'Network Monitoring',
-    'Permission Tracking',
-    'Download Protection',
-    'Advanced Threat Detection'
-  ]
-};
+// Performance monitoring
+window.addEventListener('load', () => {
+  const perfData = performance.getEntriesByType('navigation')[0];
+  if (perfData && perfData.loadEventEnd - perfData.loadEventStart > 10000) {
+    reportSuspiciousActivity('SLOW_PAGE_LOAD', {
+      reason: 'Unusually slow page load detected',
+      loadTime: perfData.loadEventEnd - perfData.loadEventStart,
+      url: window.location.href,
+      riskScore: 25
+    });
+  }
+});
+
+// Check for mining indicators in page content
+document.addEventListener('DOMContentLoaded', () => {
+  const bodyText = document.body.textContent || '';
+  if (/mining|crypto|monero|bitcoin|hash rate/i.test(bodyText)) {
+    reportSuspiciousActivity('CRYPTO_CONTENT_DETECTED', {
+      reason: 'Cryptocurrency-related content detected',
+      url: window.location.href,
+      riskScore: 20
+    });
+  }
+});
