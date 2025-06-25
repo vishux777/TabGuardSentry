@@ -1,4 +1,4 @@
-# Tab Guard - Advanced Security Monitor (New Update Realeased - 21-06-2025)🛡️
+# Tab Guard - Advanced Security Monitor (New Update Realeased - 21-06-2025 - V3)🛡️
 
 **Professional browser security extension with real-time threat detection, advanced monitoring, and comprehensive protection against malicious activities.**
 
